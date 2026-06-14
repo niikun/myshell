@@ -11,11 +11,6 @@ enum Redirect{
     StdoutAppend(String),
 }
 
-impl Redirect {
-    fn new(){
-    }
-}
-
 struct CommandsInfo {
     commands:String,
     args:Vec<String>,
@@ -59,14 +54,14 @@ impl CommandsInfo {
                         redirect = Some(Redirect::StdoutAppend(redirect_file.clone()));
                     }
                 },
-                ' ' if !is_double_quoted & !is_single_quoted => {
+                ' ' if !is_double_quoted && !is_single_quoted => {
                         if !input_.is_empty() && !is_redirected && !is_redirect_updated{
                             messages.push(input_.clone());
                             input_.clear();
                         }
                     },
                 _  =>{
-                    if is_redirected | is_redirect_updated {
+                    if is_redirected ||  is_redirect_updated {
                         redirect_file.push(c);
                     } else {
                         input_.push(c)
@@ -80,9 +75,9 @@ impl CommandsInfo {
         let commands: String= message_iter.next().unwrap().trim().to_string();
         let mut args:Vec<String> = message_iter.map(|x| x.to_string()).collect();
         Self{
-            commands:commands,
-            args:args,
-            redirect:redirect,
+            commands,
+            args,
+            redirect,
         }
     }
 }
@@ -120,6 +115,7 @@ fn main() {
             }
             "exit" => break,
             "echo" => {
+                //redirectの処理
                 println!("{}",commands_info.args.join(" ").trim());
             },
             "pwd" => {
@@ -150,6 +146,7 @@ fn main() {
             },
 
             _ => {
+                //redirect の処理
                 let mut is_in_path = false;
                 path_env.split(":").find_map(|dir|{
                     let command = dir.to_string() + "/" + &commands_info.commands;
