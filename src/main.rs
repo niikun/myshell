@@ -1,7 +1,7 @@
 #[allow(unused_imports)] 
 use std::io;
 use std::io::{Write};
-use std::process::Command;
+use std::process::{Command, Stdio, Child};
 use std::path;
 use std::fs::File;
 use std::os::unix::fs::PermissionsExt;
@@ -63,13 +63,16 @@ impl CommandsInfo {
                 _  =>{
                     if is_redirected ||  is_redirect_updated {
                         redirect_file.push(c);
+                        input_.clear();
                     } else {
                         input_.push(c)
                     }
                 } ,
             }
         }
-        messages.push(input_);
+        if input_ != ""{
+            messages.push(input_);
+        } 
 
         let mut message_iter = messages.iter();
         let commands: String= message_iter.next().unwrap().trim().to_string();
@@ -150,10 +153,18 @@ fn main() {
                 let mut is_in_path = false;
                 path_env.split(":").find_map(|dir|{
                     let command = dir.to_string() + "/" + &commands_info.commands;
-                    let child = Command::new(command)
-                                    .args(commands_info.args.clone())
-                                    .spawn();
+                    let mut child:Result<Child, io::Error> = if let Some(Redirect::Stdout(file )) = &commands_info.redirect{
+                        let file_name = File::create(file).unwrap();
+                        Command::new(command)
+                            .args(commands_info.args.clone())
+                            .stdout(Stdio::from(file_name))
+                            .spawn()
 
+                    } else{
+                        Command::new(command)
+                                    .args(commands_info.args.clone())
+                                    .spawn()
+                    };
 
                     match child {
                         Ok(mut result) => {
