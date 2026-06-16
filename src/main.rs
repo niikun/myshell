@@ -3,7 +3,7 @@ use std::io;
 use std::io::{Write};
 use std::process::Command;
 use std::path;
-use std::fs::File;
+use std::fs::{File, OpenOptions};
 use std::os::unix::fs::PermissionsExt;
 
 enum Redirect{
@@ -34,7 +34,9 @@ impl CommandsInfo {
                     if is_redirected{
                         is_redirected = false;
                         is_redirect_updated = true;
-                    } else {
+                    } else if !is_redirected && is_redirect_updated{
+                        is_redirect_updated = false;
+                    } else{
                         is_redirected = true;
                     }
                 },
@@ -47,12 +49,12 @@ impl CommandsInfo {
                 '$' if is_single_quoted => input_.push(c),
                 '\n' => {
                     if is_redirected{
-                        is_redirected = !is_redirected;   
+                        is_redirected = false;   
                         redirect = Some(Redirect::Stdout(redirect_file.clone()));
                     } else if is_redirect_updated{
                         is_redirect_updated = false;
                         redirect = Some(Redirect::StdoutAppend(redirect_file.clone()));
-                    }
+                    } else { }
                 },
                 ' ' if !is_double_quoted && !is_single_quoted => {
                         if !input_.is_empty() && !is_redirected && !is_redirect_updated{
@@ -69,8 +71,10 @@ impl CommandsInfo {
                 } ,
             }
         }
-        messages.push(input_);
-
+        if input_ != ""{
+            messages.push(input_);
+        }
+        
         let mut message_iter = messages.iter();
         let commands: String= message_iter.next().unwrap().trim().to_string();
         let mut args:Vec<String> = message_iter.map(|x| x.to_string()).collect();
@@ -150,15 +154,32 @@ fn main() {
                 let mut is_in_path = false;
                 path_env.split(":").find_map(|dir|{
                     let command = dir.to_string() + "/" + &commands_info.commands;
-                    let child = Command::new(command)
-                                    .args(commands_info.args.clone())
-                                    .spawn();
+                    let mut cmd = Command::new(command);
+                    cmd.args(&commands_info.args);
+                    match &commands_info.redirect {
+                        Some(Redirect::Stdout(file)) =>{
+                            if let Ok(f) = File::create(file){
+                                cmd.stdout(f);
+                            }  
+                        },
+                        Some(Redirect::StdoutAppend(file)) => {
+                            if let Ok(f) = OpenOptions::new() 
+                                            .create(true)
+                                            .append(true)
+                                            .open(file){
+                                cmd.stdout(f);
+                            }
+                        }
+                        None =>{
+
+                        }
+                    }
 
 
-                    match child {
-                        Ok(mut result) => {
+                    match cmd.spawn() {
+                        Ok(mut child) => {
                             is_in_path = true;
-                            result.wait().unwrap();
+                            child.wait().unwrap();
                             Some(())
                         },
                         Err(_) => None,
