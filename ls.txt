@@ -1,0 +1,19 @@
+total 36
+drwxr-xr-x 6 kawata kawata 4096 Jun 17 07:31 .
+drwxr-xr-x 3 kawata kawata 4096 Jun 11 06:17 ..
+drwxr-xr-x 8 kawata kawata 4096 Jun 17 07:27 .git
+-rw-r--r-- 1 kawata kawata    8 Jun 11 06:17 .gitignore
+-rw-r--r-- 1 kawata kawata  151 Jun 11 06:17 Cargo.lock
+-rw-r--r-- 1 kawata kawata   78 Jun 11 06:17 Cargo.toml
+-rw-r--r-- 1 kawata kawata    0 Jun 17 07:23 input.txt
+-rw-r--r-- 1 kawata kawata    0 Jun 17 07:31 ls.txt
+drwxr-xr-x 4 kawata kawata 4096 Jun 17 06:08 sandbox
+drwxr-xr-x 2 kawata kawata 4096 Jun 17 07:27 src
+drwxr-xr-x 4 kawata kawata 4096 Jun 11 06:17 target
+Cargo.lock
+Cargo.toml
+input.txt
+ls.txt
+sandbox
+src
+target
